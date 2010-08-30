@@ -96,7 +96,14 @@ struct clkctl_acpu_speed acpu_freq_tbl[] = {
 	{ 921600, CCTL(CLK_TCXO, 1),		SRC_SCPLL, 0x18, 0, 1300, 128000 },
 	{ 960000, CCTL(CLK_TCXO, 1),		SRC_SCPLL, 0x19, 0, 1300, 128000 },
 	{ 998400, CCTL(CLK_TCXO, 1),		SRC_SCPLL, 0x1A, 0, 1300, 128000 },
-	{ 0 },
+	{ 1036800, CCTL(CLK_TCXO, 1),		SRC_SCPLL, 0x1B, 0, 1300, 128000 },
+	{ 1075200, CCTL(CLK_TCXO, 1),		SRC_SCPLL, 0x1C, 0, 1300, 128000 },
+	{ 1113600, CCTL(CLK_TCXO, 1),		SRC_SCPLL, 0x1D, 0, 1300, 128000 },
+	{ 1152000, CCTL(CLK_TCXO, 1),           SRC_SCPLL, 0x1E, 0, 1300, 128000 },
+        { 1190400, CCTL(CLK_TCXO, 1),           SRC_SCPLL, 0x1F, 0, 1325, 128000 },
+        { 1228800, CCTL(CLK_TCXO, 1),           SRC_SCPLL, 0x20, 0, 1350, 128000 },
+        { 1267200, CCTL(CLK_TCXO, 1),           SRC_SCPLL, 0x21, 0, 1350, 128000 },
+        { 0 },
 };
 
 /* select the standby clock that is used when switching scpll
@@ -108,7 +115,7 @@ struct clkctl_acpu_speed *acpu_stby = &acpu_freq_tbl[2];
 #define IS_ACPU_STANDBY(x)	(((x)->clk_cfg == acpu_stby->clk_cfg) && \
 				 ((x)->clk_sel == acpu_stby->clk_sel))
 
-struct clkctl_acpu_speed *acpu_mpll = &acpu_freq_tbl[2];
+// struct clkctl_acpu_speed *acpu_mpll = &acpu_freq_tbl[2];
 
 #ifdef CONFIG_CPU_FREQ_TABLE
 static struct cpufreq_frequency_table freq_table[ARRAY_SIZE(acpu_freq_tbl)];
@@ -128,7 +135,7 @@ static void __init acpuclk_init_cpufreq_table(void)
 
 		vdd = acpu_freq_tbl[i].vdd;
 		/* Allow mpll and the first scpll speeds */
-		if (acpu_freq_tbl[i].acpu_khz == acpu_mpll->acpu_khz ||
+		if (acpu_freq_tbl[i].acpu_khz == 245000 ||
 				acpu_freq_tbl[i].acpu_khz == 384000) {
 			freq_table[i].frequency = acpu_freq_tbl[i].acpu_khz;
 			continue;
@@ -448,24 +455,10 @@ void __init acpu_freq_tbl_fixup(void)
 		goto skip_efuse_fixup;
 	}
 
-	switch (tcsr_spare2 & 0xF0) {
-	case 0x70:
-		max_acpu_khz = 768000;
-		break;
-	case 0x30:
-	case 0x00:
-		max_acpu_khz = 998400;
-		break;
-	case 0x10:
-		max_acpu_khz = 1267200;
-		break;
-	default:
-		pr_warning("Invalid efuse data (%x) on Max ACPU freq!\n",
-			tcsr_spare2);
-		goto skip_efuse_fixup;
-	}
+	/* Override the fixup because we're overclocking */
+	max_acpu_khz = 1267200;
 
-	pr_info("Max ACPU freq from efuse data is %d KHz\n", max_acpu_khz);
+	/* pr_info("Max ACPU freq is %d KHz\n", max_acpu_khz); */
 
 	for (i = 0; acpu_freq_tbl[i].acpu_khz != 0; i++) {
 		if (acpu_freq_tbl[i].acpu_khz > max_acpu_khz) {
@@ -594,8 +587,8 @@ void __init msm_acpu_clock_init(struct msm_acpu_clock_platform_data *clkdata)
 	drv_state.wait_for_irq_khz = clkdata->wait_for_irq_khz;
         drv_state.acpu_set_vdd = clkdata->acpu_set_vdd;
 
-	if (clkdata->mpll_khz)
-		acpu_mpll->acpu_khz = clkdata->mpll_khz;
+//	if (clkdata->mpll_khz)
+//		acpu_mpll->acpu_khz = clkdata->mpll_khz;
 
 	acpu_freq_tbl_fixup();
 	acpuclk_init();
